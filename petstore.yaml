@@ -748,7 +748,7 @@ components:
         api_enum:
           $ref: "#/components/schemas/ApiEnum"
     ApiEnum:
-      title: An uploaded response
+      title: An enum
       description: Describes an enum
       type: string
       enum:
