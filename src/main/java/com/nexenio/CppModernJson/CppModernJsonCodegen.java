@@ -16,7 +16,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
   protected String projectName = "cpp-modern-json";
 
   /** Version of the nlohmann/json library to use. Used in the CMakeLists. */
-  protected String nlohmannJsonVersion = "3.7.3";
+  protected String nlohmannJsonVersion = "3.9.1";
 
   // source folder where to write the files
   protected String modelsFolderName = "models";
