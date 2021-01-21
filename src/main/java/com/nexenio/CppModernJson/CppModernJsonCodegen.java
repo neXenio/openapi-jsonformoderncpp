@@ -128,6 +128,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     importMapping.put("std::vector", "#include <vector>");
     importMapping.put("std::map", "#include <map>");
     importMapping.put("std::string", "#include <string>");
+    importMapping.put("std::shared_ptr", "#include <memory>");
 
     // Models containing an 'object' will attempt to import "::nlohmann::json" (see type-mapping
     // above). Don't.
@@ -207,11 +208,25 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
   public String getSchemaType(Schema p) {
     String openAPIType = super.getSchemaType(p);
     String type = null;
+
+    Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+    Schema completeSchema = allDefinitions.get(openAPIType);
+
     if (typeMapping.containsKey(openAPIType)) {
       type = typeMapping.get(openAPIType);
-      if (languageSpecificPrimitives.contains(type)) return toModelName(type);
-    } else type = openAPIType;
-    return toModelName(type);
+
+      if (languageSpecificPrimitives.contains(type)) {
+        return toModelName(type);
+      }
+    } else {
+      type = openAPIType;
+    }
+
+    if(completeSchema != null && completeSchema.getDiscriminator() != null) {
+      return "std::shared_ptr<" + toModelName(type) + ">";
+    } else {
+      return toModelName(type);
+    }
   }
 
   @Override
@@ -230,7 +245,13 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     Set<String> oldImports = codegenModel.imports;
     codegenModel.imports = new HashSet<>();
     for (String imp : oldImports) {
-      String newImp = toModelImport(imp);
+      String newImp = "";
+      if(imp.startsWith("std::shared_ptr")) {
+        newImp = toModelImport(imp.split("<|>")[1]);
+        codegenModel.imports.add(toModelImport("std::shared_ptr"));
+      } else {
+        newImp = toModelImport(imp);
+      }
       if (!newImp.isEmpty()) {
         codegenModel.imports.add(newImp);
       }
