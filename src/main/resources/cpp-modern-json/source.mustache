@@ -1,15 +1,23 @@
 void {{classname}}::to_json(::nlohmann::json& j, const {{classname}}& obj) {
-    j = ::nlohmann::json{
+{{#parent}}    {{{parent}}}::to_json(j, obj);
+{{#vars}}    j["{{baseName}}"] = obj.{{baseName}};
+{{/vars}}
+{{/parent}}
+{{^parent}}    j = ::nlohmann::json{
 {{#vars}}        {"{{baseName}}", obj.{{baseName}}},
 {{/vars}}
     };
+{{/parent}}
 }
 
 void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}& obj) {
-{{#requiredVars}}    j.at("{{baseName}}").get_to(obj.{{baseName}});
-{{/requiredVars}}
-{{#optionalVars}}    detail::to_optional(j, "{{baseName}}", obj.{{baseName}});
-{{/optionalVars}}
+{{#parent}}    {{{parent}}}::from_json(j, obj);{{/parent}}
+{{#vars}}
+{{#required}}    j.at("{{baseName}}").get_to(obj.{{baseName}});
+{{/required}}
+{{^required}}    detail::to_optional(j, "{{baseName}}", obj.{{baseName}});
+{{/required}}
+{{/vars}}
 }
 
 
