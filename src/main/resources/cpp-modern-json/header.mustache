@@ -21,7 +21,7 @@ namespace {{this}} {
 {{/example}}
  */
 {{/description}}
-struct {{classname}} {
+struct {{classname}}{{#parent}} : public {{{parent}}}{{/parent}} {
 
     static void to_json(::nlohmann::json& j, const {{classname}}& obj);
     static void from_json(const ::nlohmann::json& j, {{classname}}& obj);
@@ -44,13 +44,17 @@ struct {{classname}} {
 {{/hasEnums}}
 
 {{#hasRequired}}    // required fields
-{{#requiredVars}}    {{{datatypeWithEnum}}} {{baseName}};
-{{/requiredVars}}
+{{#vars}}
+{{#required}}    {{{datatypeWithEnum}}} {{baseName}};
+{{/required}}
+{{/vars}}
 {{/hasRequired}}
 
 {{#hasOptional}}    // optional fields
-{{#optionalVars}}    std::optional<{{{datatypeWithEnum}}}> {{baseName}};
-{{/optionalVars}}
+{{#vars}}
+{{^required}}    std::optional<{{{datatypeWithEnum}}}> {{baseName}};
+{{/required}}
+{{/vars}}
 {{/hasOptional}}
 };
 

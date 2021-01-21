@@ -82,6 +82,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
 
   public CppModernJsonCodegen() {
     super();
+    supportsInheritance = true;
 
     /** Output folder. */
     outputFolder = "generated-code/cpp-modern-json";
