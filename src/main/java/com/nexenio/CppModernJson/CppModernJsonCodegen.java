@@ -210,7 +210,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     String openAPIType = super.getSchemaType(p);
     String type = null;
 
-    Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+    Map<String, Schema> allDefinitions = ModelUtils.getSchemas(openAPI);
     Schema completeSchema = allDefinitions.get(openAPIType);
 
     if (typeMapping.containsKey(openAPIType)) {
