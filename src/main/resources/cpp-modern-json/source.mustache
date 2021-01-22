@@ -1,56 +1,26 @@
-void {{classname}}::to_json(::nlohmann::json& j, const {{classname}}& obj) {
-{{#parent}}    {{{parent}}}::to_json(j, obj);
-{{#vars}}    j["{{baseName}}"] = obj.{{baseName}};
-{{/vars}}
-{{/parent}}
-{{^parent}}    j = ::nlohmann::json{
-{{#vars}}        {"{{baseName}}", obj.{{baseName}}},
-{{/vars}}
-    };
-{{/parent}}
-}
+{{! ---------------------------------------------------------------------- }}
+{{!                                                                        }}
+{{! Base template for all source files                                     }}
+{{! Depending on the model, this will either instantiate the source for an }}
+{{! enum class or the source for a struct.                                 }}
+{{!                                                                        }}
+{{! ---------------------------------------------------------------------- }}
+{{#models}}{{#model}}#include "{{classname}}.h"
 
-void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}& obj) {
-{{#parent}}    {{{parent}}}::from_json(j, obj);{{/parent}}
-{{#vars}}
-{{#required}}    j.at("{{baseName}}").get_to(obj.{{baseName}});
-{{/required}}
-{{^required}}    detail::to_optional(j, "{{baseName}}", obj.{{baseName}});
-{{/required}}
-{{/vars}}
-}
+#include "serialization.h"
+#include "utility.h"
 
+{{#modelNamespaceDeclarations}}
+namespace {{this}} {
+{{/modelNamespaceDeclarations}}
 
-{{#hasEnums}}{{#vars}}{{#isEnum}}
-std::string {{classname}}::to_string({{classname}}::{{enumName}} value) {
-    switch (value) {
-{{#allowableValues}}
-{{#enumVars}}
-    case {{classname}}::{{enumName}}::{{name}}:
-        return "{{name}}";
-{{/enumVars}}
-{{/allowableValues}}
-    }
-    UNREACHABLE_CODE
-}
-
-void {{classname}}::to_json(::nlohmann::json& j, const {{classname}}::{{enumName}}& value) {
-    j = {{classname}}::to_string(value);
-}
-
-void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}::{{enumName}}& value) {
-    auto str = j.get_ref<const ::nlohmann::json::string_t&>();
-{{#allowableValues}}
-{{#enumVars}}
-    if (str == "{{name}}") {
-        value = {{classname}}::{{enumName}}::{{name}};
-        return;
-    }
-{{/enumVars}}
-{{/allowableValues}}
-    throw invalid_enum_value(str);
-}
-
+{{#isEnum}}{{>enum-source}}
 {{/isEnum}}
-{{/vars}}
-{{/hasEnums}}
+{{^isEnum}}{{>struct-source}}
+{{/isEnum}}
+
+{{#modelNamespaceDeclarations}}
+}
+{{/modelNamespaceDeclarations}}
+{{/model}}
+{{/models}}

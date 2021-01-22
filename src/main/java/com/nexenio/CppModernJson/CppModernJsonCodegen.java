@@ -88,8 +88,8 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     outputFolder = "generated-code/cpp-modern-json";
 
     /** Models. */
-    modelTemplateFiles.put("model-header.mustache", ".h");
-    modelTemplateFiles.put("model-source.mustache", ".cpp");
+    modelTemplateFiles.put("header.mustache", ".h");
+    modelTemplateFiles.put("source.mustache", ".cpp");
 
     /** Template Location. This is the location which templates will be read from. */
     templateDir = "cpp-modern-json";
