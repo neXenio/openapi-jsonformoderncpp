@@ -70,6 +70,26 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     return results;
   }
 
+  /** Provides an opportunity to inspect and modify model data before the code is generated. */
+  @Override
+  public Map<String, Object> postProcessAllModels(Map<String, Object> objs) {
+    Map<String, Object> results = super.postProcessAllModels(objs);
+
+    for(Object modelSpec : results.values()) {
+      ArrayList<HashMap<String, Object>> modelList = (ArrayList<HashMap<String, Object>>)((HashMap<String, Object>) modelSpec).get("models");
+      HashMap<String, Object> modelEntry = modelList.get(0);
+      CodegenModel codegenModel = (CodegenModel) modelEntry.get("model");
+
+      if (codegenModel.hasChildren) {
+        for (CodegenModel child : codegenModel.children) {
+          codegenModel.imports.add(toModelImport(child.name));
+        }
+      }
+    }
+
+    return results;
+  }
+
   /**
    * Returns human-friendly help for the generator. Provide the consumer with help tips, parameters
    * here

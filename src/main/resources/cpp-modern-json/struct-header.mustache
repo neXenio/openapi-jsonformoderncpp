@@ -92,6 +92,7 @@ struct adl_serializer<{{modelNamespace}}::{{classname}}::{{enumName}}> {
     static void to_json(json& j, const {{modelNamespace}}::{{classname}}::{{enumName}}& value) {
         {{modelNamespace}}::{{classname}}::to_json(j, value);
     }
+
     static void from_json(const json& j, {{modelNamespace}}::{{classname}}::{{enumName}}& value) {
         {{modelNamespace}}::{{classname}}::from_json(j, value);
     }
@@ -101,6 +102,36 @@ struct adl_serializer<{{modelNamespace}}::{{classname}}::{{enumName}}> {
 {{/vars}}
 }
 {{/hasEnums}}
+
+{{! ---------------------------------------------------------------------- }}
+{{! adl_serializer specializations for children in this model              }}
+{{! ---------------------------------------------------------------------- }}
+
+{{#hasChildren}}
+{{! adl_serializer specializations need to live in nlohmann namespace      }}
+namespace nlohmann {
+using _models = {{modelNamespace}};
+template<>
+struct adl_serializer<std::shared_ptr<_models::{{classname}}>> {
+    static void from_json(const json& j, std::shared_ptr<_models::{{classname}}>& ptr) {
+        if (j.is_null()) {
+          ptr.reset();
+        } else {
+          {{#discriminator}}
+          switch(ptr->{{propertyBaseName}}) {
+          {{#mappedModels}}
+            case _models::{{propertyName}}::{{mappingName}}:
+              ptr = std::make_shared<_models::{{modelName}}>(j.get<_models::{{modelName}}>());
+              return;
+          {{/mappedModels}}
+          }
+          UNREACHABLE_CODE
+          {{/discriminator}}
+        }
+    }
+};
+}
+{{/hasChildren}}
 
 {{! ---------------------------------------------------------------------- }}
 {{! to_json and from_json for all fields in this model                     }}
