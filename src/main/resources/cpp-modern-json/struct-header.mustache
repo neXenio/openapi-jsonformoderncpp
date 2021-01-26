@@ -23,6 +23,8 @@ namespace {{this}} {
 {{/description}}
 struct {{classname}}{{#parent}} : public {{{parent}}}{{/parent}} {
 
+    virtual ~{{classname}}() = default;
+
     static void to_json(::nlohmann::json& j, const {{classname}}& obj);
     static void from_json(const ::nlohmann::json& j, {{classname}}& obj);
 
