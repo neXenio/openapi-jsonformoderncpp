@@ -42,6 +42,7 @@ void adl_serializer<std::shared_ptr<_models::{{classname}}>>::from_json(
       {{#discriminator}}
       switch(base.{{propertyBaseName}}) {
       {{#mappedModels}}
+        {{! we don't have access to the discriminator type, so we use decltype here }}
         case decltype(base.{{propertyBaseName}})::{{mappingName}}:
           ptr = std::make_shared<_models::{{modelName}}>(j.get<_models::{{modelName}}>());
           return;
@@ -55,8 +56,21 @@ void adl_serializer<std::shared_ptr<_models::{{classname}}>>::from_json(
 void adl_serializer<std::shared_ptr<_models::{{classname}}>>::to_json(
     json &j, const std::shared_ptr<_models::{{classname}}> &ptr)
 {
-    // no special handling needed -> redirect to to_json in serialization.h
-    to_json(j, ptr);
+  if (ptr) {
+    {{#discriminator}}
+    switch(ptr->{{propertyBaseName}}) {
+    {{#mappedModels}}
+      {{! we don't have access to the discriminator type, so we use decltype here }}
+      case decltype(ptr->{{propertyBaseName}})::{{mappingName}}:
+        j = *std::dynamic_pointer_cast<_models::{{modelName}}>(ptr);
+        return;
+    {{/mappedModels}}
+    }
+    UNREACHABLE_CODE
+    {{/discriminator}}
+  } else {
+      j = nullptr;
+  }
 }
 } // namespace nlohmann
 {{/hasChildren}}
