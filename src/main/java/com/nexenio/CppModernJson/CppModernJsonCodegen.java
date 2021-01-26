@@ -47,49 +47,6 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     return projectName;
   }
 
-  /** Provides an opportunity to inspect and modify operation data before the code is generated. */
-  @SuppressWarnings("unchecked")
-  @Override
-  public Map<String, Object> postProcessOperationsWithModels(
-      Map<String, Object> objs, List<Object> allModels) {
-    // to try debugging your code generator:
-    // set a break point on the next line.
-    // then debug the JUnit test called LaunchGeneratorInDebugger
-
-    Map<String, Object> results = super.postProcessOperationsWithModels(objs, allModels);
-
-    Map<String, Object> ops = (Map<String, Object>) results.get("operations");
-    ArrayList<CodegenOperation> opList = (ArrayList<CodegenOperation>) ops.get("operation");
-
-    // iterate over the operation and perhaps modify something
-    for (CodegenOperation co : opList) {
-      // example:
-      // co.httpMethod = co.httpMethod.toLowerCase();
-    }
-
-    return results;
-  }
-
-  /** Provides an opportunity to inspect and modify model data before the code is generated. */
-  @Override
-  public Map<String, Object> postProcessAllModels(Map<String, Object> objs) {
-    Map<String, Object> results = super.postProcessAllModels(objs);
-
-    for(Object modelSpec : results.values()) {
-      ArrayList<HashMap<String, Object>> modelList = (ArrayList<HashMap<String, Object>>)((HashMap<String, Object>) modelSpec).get("models");
-      HashMap<String, Object> modelEntry = modelList.get(0);
-      CodegenModel codegenModel = (CodegenModel) modelEntry.get("model");
-
-      if (codegenModel.hasChildren) {
-        for (CodegenModel child : codegenModel.children) {
-          codegenModel.imports.add(toModelImport(child.name));
-        }
-      }
-    }
-
-    return results;
-  }
-
   /**
    * Returns human-friendly help for the generator. Provide the consumer with help tips, parameters
    * here
@@ -267,7 +224,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     codegenModel.imports = new HashSet<>();
     for (String imp : oldImports) {
       String newImp = "";
-      if(imp.startsWith("std::shared_ptr")) {
+      if (imp.startsWith("std::shared_ptr")) {
         newImp = toModelImport(imp.split("<|>")[1]);
         codegenModel.imports.add(toModelImport("std::shared_ptr"));
       } else {

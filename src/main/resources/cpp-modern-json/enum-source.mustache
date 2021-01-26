@@ -24,4 +24,5 @@ void from_json(const ::nlohmann::json& j, {{classname}}& value) {
     }
 {{/enumVars}}
 {{/allowableValues}}
+    throw invalid_enum_value(str);
 }
