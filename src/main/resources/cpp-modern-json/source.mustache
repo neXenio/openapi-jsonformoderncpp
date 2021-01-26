@@ -10,6 +10,12 @@
 #include "serialization.h"
 #include "utility.h"
 
+{{#discriminator}}
+{{#mappedModels}}
+#include "{{modelName}}.h"
+{{/mappedModels}}
+{{/discriminator}}
+
 {{#modelNamespaceDeclarations}}
 namespace {{this}} {
 {{/modelNamespaceDeclarations}}
@@ -22,5 +28,37 @@ namespace {{this}} {
 {{#modelNamespaceDeclarations}}
 }
 {{/modelNamespaceDeclarations}}
+
+{{#hasChildren}}
+namespace nlohmann {
+namespace _models = {{modelNamespace}};
+void adl_serializer<std::shared_ptr<_models::{{classname}}>>::from_json(
+    const json &j, std::shared_ptr<_models::{{classname}}> &ptr)
+{
+    if (j.is_null()) {
+      ptr.reset();
+    } else {
+      const auto base = j.get<_models::{{classname}}>();
+      {{#discriminator}}
+      switch(base.{{propertyBaseName}}) {
+      {{#mappedModels}}
+        case decltype(base.{{propertyBaseName}})::{{mappingName}}:
+          ptr = std::make_shared<_models::{{modelName}}>(j.get<_models::{{modelName}}>());
+          return;
+      {{/mappedModels}}
+      }
+      UNREACHABLE_CODE
+      {{/discriminator}}
+    }
+}
+
+void adl_serializer<std::shared_ptr<_models::{{classname}}>>::to_json(
+    json &j, const std::shared_ptr<_models::{{classname}}> &ptr)
+{
+    // no special handling needed -> redirect to to_json in serialization.h
+    to_json(j, ptr);
+}
+} // namespace nlohmann
+{{/hasChildren}}
 {{/model}}
 {{/models}}

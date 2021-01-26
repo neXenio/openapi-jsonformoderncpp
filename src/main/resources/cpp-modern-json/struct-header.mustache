@@ -110,25 +110,11 @@ struct adl_serializer<{{modelNamespace}}::{{classname}}::{{enumName}}> {
 {{#hasChildren}}
 {{! adl_serializer specializations need to live in nlohmann namespace      }}
 namespace nlohmann {
-using _models = {{modelNamespace}};
+namespace _models = {{modelNamespace}};
 template<>
 struct adl_serializer<std::shared_ptr<_models::{{classname}}>> {
-    static void from_json(const json& j, std::shared_ptr<_models::{{classname}}>& ptr) {
-        if (j.is_null()) {
-          ptr.reset();
-        } else {
-          {{#discriminator}}
-          switch(ptr->{{propertyBaseName}}) {
-          {{#mappedModels}}
-            case _models::{{propertyName}}::{{mappingName}}:
-              ptr = std::make_shared<_models::{{modelName}}>(j.get<_models::{{modelName}}>());
-              return;
-          {{/mappedModels}}
-          }
-          UNREACHABLE_CODE
-          {{/discriminator}}
-        }
-    }
+    static void from_json(const json& j, std::shared_ptr<_models::{{classname}}>& ptr);
+    static void to_json(json& j, const std::shared_ptr<_models::{{classname}}>& ptr);
 };
 }
 {{/hasChildren}}
