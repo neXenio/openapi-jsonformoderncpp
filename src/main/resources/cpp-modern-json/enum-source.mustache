@@ -7,6 +7,7 @@ std::string to_string({{classname}} value) {
 {{/enumVars}}
 {{/allowableValues}}
     }
+    UNREACHABLE_CODE
 }
 
 void to_json(::nlohmann::json& j, const {{classname}}& value) {
@@ -23,4 +24,5 @@ void from_json(const ::nlohmann::json& j, {{classname}}& value) {
     }
 {{/enumVars}}
 {{/allowableValues}}
+    throw invalid_enum_value(str);
 }

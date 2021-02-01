@@ -1,48 +1,78 @@
-void {{classname}}::to_json(::nlohmann::json& j, const {{classname}}& obj) {
-    j = ::nlohmann::json{
-{{#vars}}        {"{{baseName}}", obj.{{baseName}}},
-{{/vars}}
-    };
+{{! ---------------------------------------------------------------------- }}
+{{!                                                                        }}
+{{! Base template for all source files                                     }}
+{{! Depending on the model, this will either instantiate the source for an }}
+{{! enum class or the source for a struct.                                 }}
+{{!                                                                        }}
+{{! ---------------------------------------------------------------------- }}
+{{#models}}{{#model}}#include "{{classname}}.h"
+
+#include "serialization.h"
+#include "utility.h"
+
+{{#discriminator}}
+{{#mappedModels}}
+#include "{{modelName}}.h"
+{{/mappedModels}}
+{{/discriminator}}
+
+{{#modelNamespaceDeclarations}}
+namespace {{this}} {
+{{/modelNamespaceDeclarations}}
+
+{{#isEnum}}{{>enum-source}}
+{{/isEnum}}
+{{^isEnum}}{{>struct-source}}
+{{/isEnum}}
+
+{{#modelNamespaceDeclarations}}
+}
+{{/modelNamespaceDeclarations}}
+
+{{#hasChildren}}
+namespace nlohmann {
+namespace _models = {{modelNamespace}};
+void adl_serializer<std::shared_ptr<_models::{{classname}}>>::from_json(
+    const json &j, std::shared_ptr<_models::{{classname}}> &ptr)
+{
+    if (j.is_null()) {
+      ptr.reset();
+    } else {
+      const auto base = j.get<_models::{{classname}}>();
+      {{#discriminator}}
+      switch(base.{{propertyBaseName}}) {
+      {{#mappedModels}}
+        {{! we don't have access to the discriminator type, so we use decltype here }}
+        case decltype(base.{{propertyBaseName}})::{{mappingName}}:
+          ptr = std::make_shared<_models::{{modelName}}>(j.get<_models::{{modelName}}>());
+          return;
+      {{/mappedModels}}
+      }
+      UNREACHABLE_CODE
+      {{/discriminator}}
+    }
 }
 
-void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}& obj) {
-{{#requiredVars}}    j.at("{{baseName}}").get_to(obj.{{baseName}});
-{{/requiredVars}}
-{{#optionalVars}}    detail::to_optional(j, "{{baseName}}", obj.{{baseName}});
-{{/optionalVars}}
-}
-
-
-{{#hasEnums}}{{#vars}}{{#isEnum}}
-std::string {{classname}}::to_string({{classname}}::{{enumName}} value) {
-    switch (value) {
-{{#allowableValues}}
-{{#enumVars}}
-    case {{classname}}::{{enumName}}::{{name}}:
-        return "{{name}}";
-{{/enumVars}}
-{{/allowableValues}}
+void adl_serializer<std::shared_ptr<_models::{{classname}}>>::to_json(
+    json &j, const std::shared_ptr<_models::{{classname}}> &ptr)
+{
+  if (ptr) {
+    {{#discriminator}}
+    switch(ptr->{{propertyBaseName}}) {
+    {{#mappedModels}}
+      {{! we don't have access to the discriminator type, so we use decltype here }}
+      case decltype(ptr->{{propertyBaseName}})::{{mappingName}}:
+        j = *std::dynamic_pointer_cast<_models::{{modelName}}>(ptr);
+        return;
+    {{/mappedModels}}
     }
     UNREACHABLE_CODE
+    {{/discriminator}}
+  } else {
+      j = nullptr;
+  }
 }
-
-void {{classname}}::to_json(::nlohmann::json& j, const {{classname}}::{{enumName}}& value) {
-    j = {{classname}}::to_string(value);
-}
-
-void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}::{{enumName}}& value) {
-    auto str = j.get_ref<const ::nlohmann::json::string_t&>();
-{{#allowableValues}}
-{{#enumVars}}
-    if (str == "{{name}}") {
-        value = {{classname}}::{{enumName}}::{{name}};
-        return;
-    }
-{{/enumVars}}
-{{/allowableValues}}
-    throw invalid_enum_value(str);
-}
-
-{{/isEnum}}
-{{/vars}}
-{{/hasEnums}}
+} // namespace nlohmann
+{{/hasChildren}}
+{{/model}}
+{{/models}}

@@ -16,7 +16,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
   protected String projectName = "cpp-modern-json";
 
   /** Version of the nlohmann/json library to use. Used in the CMakeLists. */
-  protected String nlohmannJsonVersion = "3.7.3";
+  protected String nlohmannJsonVersion = "3.9.1";
 
   // source folder where to write the files
   protected String modelsFolderName = "models";
@@ -47,29 +47,6 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     return projectName;
   }
 
-  /** Provides an opportunity to inspect and modify operation data before the code is generated. */
-  @SuppressWarnings("unchecked")
-  @Override
-  public Map<String, Object> postProcessOperationsWithModels(
-      Map<String, Object> objs, List<Object> allModels) {
-    // to try debugging your code generator:
-    // set a break point on the next line.
-    // then debug the JUnit test called LaunchGeneratorInDebugger
-
-    Map<String, Object> results = super.postProcessOperationsWithModels(objs, allModels);
-
-    Map<String, Object> ops = (Map<String, Object>) results.get("operations");
-    ArrayList<CodegenOperation> opList = (ArrayList<CodegenOperation>) ops.get("operation");
-
-    // iterate over the operation and perhaps modify something
-    for (CodegenOperation co : opList) {
-      // example:
-      // co.httpMethod = co.httpMethod.toLowerCase();
-    }
-
-    return results;
-  }
-
   /**
    * Returns human-friendly help for the generator. Provide the consumer with help tips, parameters
    * here
@@ -82,13 +59,14 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
 
   public CppModernJsonCodegen() {
     super();
+    supportsInheritance = true;
 
     /** Output folder. */
     outputFolder = "generated-code/cpp-modern-json";
 
     /** Models. */
-    modelTemplateFiles.put("model-header.mustache", ".h");
-    modelTemplateFiles.put("model-source.mustache", ".cpp");
+    modelTemplateFiles.put("header.mustache", ".h");
+    modelTemplateFiles.put("source.mustache", ".cpp");
 
     /** Template Location. This is the location which templates will be read from. */
     templateDir = "cpp-modern-json";
@@ -128,6 +106,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     importMapping.put("std::vector", "#include <vector>");
     importMapping.put("std::map", "#include <map>");
     importMapping.put("std::string", "#include <string>");
+    importMapping.put("std::shared_ptr", "#include <memory>");
 
     // Models containing an 'object' will attempt to import "::nlohmann::json" (see type-mapping
     // above). Don't.
@@ -207,11 +186,25 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
   public String getSchemaType(Schema p) {
     String openAPIType = super.getSchemaType(p);
     String type = null;
+
+    Map<String, Schema> allDefinitions = ModelUtils.getSchemas(openAPI);
+    Schema completeSchema = allDefinitions.get(openAPIType);
+
     if (typeMapping.containsKey(openAPIType)) {
       type = typeMapping.get(openAPIType);
-      if (languageSpecificPrimitives.contains(type)) return toModelName(type);
-    } else type = openAPIType;
-    return toModelName(type);
+
+      if (languageSpecificPrimitives.contains(type)) {
+        return toModelName(type);
+      }
+    } else {
+      type = openAPIType;
+    }
+
+    if(completeSchema != null && completeSchema.getDiscriminator() != null) {
+      return "std::shared_ptr<" + toModelName(type) + ">";
+    } else {
+      return toModelName(type);
+    }
   }
 
   @Override
@@ -230,7 +223,13 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     Set<String> oldImports = codegenModel.imports;
     codegenModel.imports = new HashSet<>();
     for (String imp : oldImports) {
-      String newImp = toModelImport(imp);
+      String newImp = "";
+      if (imp.startsWith("std::shared_ptr")) {
+        newImp = toModelImport(imp.split("<|>")[1]);
+        codegenModel.imports.add(toModelImport("std::shared_ptr"));
+      } else {
+        newImp = toModelImport(imp);
+      }
       if (!newImp.isEmpty()) {
         codegenModel.imports.add(newImp);
       }
