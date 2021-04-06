@@ -79,7 +79,7 @@ inline std::string to_string({{classname}}::{{enumName}} value) {
 {{/hasEnums}}
 
 // operator< is needed for std::set support
-friend operator<(const {{classname}}& l, const {{classname}}& r) {
+friend bool operator<(const {{classname}}& l, const {{classname}}& r) {
    return std::tie({{#vars}}l.{{baseName}}{{^-last}},{{/-last}}{{/vars}}) < std::tie({{#vars}}r.{{baseName}}{{^-last}},{{/-last}}{{/vars}});
 }
 
