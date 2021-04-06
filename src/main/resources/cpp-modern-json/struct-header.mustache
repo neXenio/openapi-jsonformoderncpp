@@ -1,5 +1,4 @@
 #include <nlohmann/json.hpp>
-#include <tuple>
 
 {{#hasOptional}}#include <optional>
 {{/hasOptional}}
@@ -48,6 +47,9 @@ struct {{classname}}{{#parent}} : public {{{parent}}}{{/parent}} {
 {{/vars}}
 {{/hasEnums}}
 
+// operator< is needed for std::set support
+friend bool operator<(const {{classname}}& l, const {{classname}}& r);
+
 {{#hasRequired}}    // required fields
 {{#vars}}
 {{#required}}    {{{datatypeWithEnum}}} {{baseName}};
@@ -77,11 +79,6 @@ inline std::string to_string({{classname}}::{{enumName}} value) {
 {{/isEnum}}
 {{/vars}}
 {{/hasEnums}}
-
-// operator< is needed for std::set support
-friend bool operator<(const {{classname}}& l, const {{classname}}& r) {
-   return std::tie({{#vars}}l.{{baseName}}{{^-last}},{{/-last}}{{/vars}}) < std::tie({{#vars}}r.{{baseName}}{{^-last}},{{/-last}}{{/vars}});
-}
 
 {{#modelNamespaceDeclarations}}
 }

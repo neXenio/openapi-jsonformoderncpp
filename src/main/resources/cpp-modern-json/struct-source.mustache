@@ -20,6 +20,10 @@ void {{classname}}::from_json(const ::nlohmann::json& j, {{classname}}& obj) {
 {{/vars}}
 }
 
+bool {{classname}}::operator<(const {{classname}}& l, const {{classname}}& r) {
+   return std::tie({{#vars}}l.{{baseName}}{{^-last}},{{/-last}}{{/vars}}) < std::tie({{#vars}}r.{{baseName}}{{^-last}},{{/-last}}{{/vars}});
+}
+
 
 {{#hasEnums}}{{#vars}}{{#isEnum}}
 std::string {{classname}}::to_string({{classname}}::{{enumName}} value) {
