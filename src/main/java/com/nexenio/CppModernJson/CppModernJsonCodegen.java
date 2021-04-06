@@ -88,7 +88,10 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     typeMapping.put("URI", "std::string");
     typeMapping.put("UUID", "std::string");
 
+    // std::vector might be overwritten to std::set if `uniqueItems` is set to true
     typeMapping.put("array", "std::vector");
+    // there actually isn't a type called "set", but we need to have a mapping to set in typeMapping to not make it a custom type
+    typeMapping.put("set", "std::set");
     typeMapping.put("binary", "std::string");
     typeMapping.put("map", "std::map");
     typeMapping.put("string", "std::string");
@@ -105,6 +108,7 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
     super.importMapping = new HashMap<String, String>();
     importMapping.put("std::vector", "#include <vector>");
     importMapping.put("std::map", "#include <map>");
+    importMapping.put("std::set", "#include <set>");
     importMapping.put("std::string", "#include <string>");
     importMapping.put("std::shared_ptr", "#include <memory>");
 
@@ -195,6 +199,11 @@ public class CppModernJsonCodegen extends AbstractCppCodegen implements CodegenC
 
       if (languageSpecificPrimitives.contains(type)) {
         return toModelName(type);
+      }
+
+      // if an array has "uniqueItems" set to true, we want to use std::set instead of std::vector
+      if((p instanceof ArraySchema) && p.getUniqueItems() != null && p.getUniqueItems() == true) {
+        type = "std::set";
       }
     } else {
       type = openAPIType;
