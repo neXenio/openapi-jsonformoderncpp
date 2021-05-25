@@ -47,6 +47,9 @@ struct {{classname}}{{#parent}} : public {{{parent}}}{{/parent}} {
 {{/vars}}
 {{/hasEnums}}
 
+// operator< is needed for std::set support
+friend bool operator<(const {{classname}}& l, const {{classname}}& r);
+
 {{#hasRequired}}    // required fields
 {{#vars}}
 {{#required}}    {{{datatypeWithEnum}}} {{baseName}};

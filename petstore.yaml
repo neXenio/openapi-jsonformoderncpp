@@ -710,6 +710,7 @@ components:
             wrapped: true
           items:
             type: string
+          uniqueItems: true
         tags:
           type: array
           xml:
